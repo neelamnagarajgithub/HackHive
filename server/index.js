@@ -1,37 +1,27 @@
-const express = require("express");
-const { MongoClient } = require("mongodb");
-require("dotenv").config();
+import express from "express";
+import mongoose from "mongoose";
+import { HackathonRouter } from "./routes/Hackathon-route.js";
+import dotenv from "dotenv";
+dotenv.config({path:'./config.env'});
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.use(express.json());
 
-const client = new MongoClient(process.env.MONGODB_URI);
+mongoose
+  .connect(process.env.MONGODB_URL)   
+  .then(() => {
+    console.log("Connected To MongoDB");
+  })
+  .catch((err) => {
+    console.log("DB Disconnected");
+  });
 
-async function connectToMongo() {
-  try {
-    await client.connect();
-    console.log("Connected to MongoDB");
-  } catch (err) {
-    console.error("Error connecting to MongoDB:", err);
-  }
-}
-connectToMongo();
 
-app.get("/", (req, res) => {
-  res.send("Yupp server is running!🎉");
-});
+console.log(process.env.PORT);
 
-app.get("/hackathons", async (req, res) => {
-  try {
-    const db = client.db("HackHive");
-    const collection = db.collection("hackathon");
-    const hackathons = await collection.find().toArray();
-    res.json(hackathons);
-  } catch (err) {
-    console.error("Error fetching hackathons:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+app.use('/api/v1/hackathons',HackathonRouter);
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
